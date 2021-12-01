@@ -7,7 +7,7 @@
  <div style="color: white">
      <h2>{{ loop.index }} / <a href="{{ path("program_show", { id: program.id }) }}">{{ program.title }}</a> - Catégorie
          : {{ program.category.name }}</h2>
-     <p>{{ program.summary }}</p>
+     <p>{{ program.synopsis }}</p>
  </div>
  {% else %}
  Aucune série trouvée.
