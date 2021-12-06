@@ -3,12 +3,20 @@
 namespace App\DataFixtures;
 
 use App\Entity\Program;
+use App\Service\Slugify;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
 class ProgramFixtures extends Fixture implements DependentFixtureInterface
 {
+    private $slugify;
+
+    public function __construct(Slugify $slugify)
+    {
+        $this->slugify = $slugify;
+    }
+
     public const PROGRAMS = [
         'Stranger Things',
         'La Casa de Papel',
@@ -23,6 +31,7 @@ class ProgramFixtures extends Fixture implements DependentFixtureInterface
         foreach (self::PROGRAMS as $key => $programName) {
         $program = new Program();
         $program->setTitle($programName);
+        $program->setSlug($this->slugify->generate($programName));
         $program->setSynopsis($programName . 'synopsis');
         $program->setCountry($programName . 'Country');
         $program->setYear(2010);
