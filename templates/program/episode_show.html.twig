@@ -12,8 +12,23 @@
         <h3>Résumé :</h3>
         <p>{{ episode.synopsis }}</p>
     </div>
-    
 </div>
+
+<h2>Commentaires :</h2>
+    
+{% for comment in episode.comments %}
+    <p>{{ comment.comment }}</p>
+    <p>{{ comment.rate }}</p>
+    <p>{{ comment.author.email }}</p>
+{% endfor %}
+
+{% if app.user %}
+    <p>Ajouter un commentaire :</p>
+    {% include "comment/_form.html.twig" %}
+{% else %}
+    <p>Vous devez être connecté pour ajouter un commentaire</p>
+{% endif %}
+
 <a href="{{ path('program_index') }}">
     Retour à la liste des programmes
 </a>

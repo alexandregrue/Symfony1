@@ -2,6 +2,7 @@
 // src/Controller/ProgramController.php
 namespace App\Controller;
 
+use App\Entity\Comment;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -11,7 +12,9 @@ use App\Form\ProgramType;
 use App\Entity\Program;
 use App\Entity\Season;
 use App\Entity\Episode;
+use App\Form\CommentType;
 use App\Service\Slugify;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
@@ -116,14 +119,16 @@ class ProgramController extends AbstractController
     }
 
     /**
-     * @Route("{program_slug}/season/{season}/episode/{episode_slug}",
+     * @Route("{program_slug}/season/{season_id}/episode/{episode_slug}",
      * requirements={"program"="\d+", "season"="\d+", "episode"="\d+"},
-     * methods={"GET"}, name="episode_show")
-     * @ParamConverter("program", class="App\Entity\Program", options={"mapping": {"program": "slug"}})
-     * @ParamConverter("episode", class="App\Entity\Episode", options={"mapping": {"episode": "slug"}})
+     * methods={"GET", "POST"}, name="episode_show")
+     * @ParamConverter("program", class="App\Entity\Program", options={"mapping": {"program_slug": "slug"}})
+     * @ParamConverter("season", class="App\Entity\Season", options={"mapping": {"season_id": "id"}})
+
+     * @ParamConverter("episode", class="App\Entity\Episode", options={"mapping": {"episode_slug": "slug"}})
      * @return Response
      */
-    public function showEpisode(Program $program, Season $season, Episode $episode): Response
+    public function showEpisode(Program $program, Season $season, Episode $episode, Request $request, EntityManagerInterface $entityManager): Response
     {
         if (!$program) {
             throw $this->createNotFoundException(
@@ -143,10 +148,27 @@ class ProgramController extends AbstractController
             );
         }
         
+        $comment = new Comment();
+        $form = $this->createForm(CommentType::class, $comment);
+        $form->handleRequest($request);
+
+        if($form->isSubmitted() && $form->isValid()) {
+            $entityManager = $this->getDoctrine()->getManager();
+            $comment->setEpisode($episode);
+            $comment->setAuthor($this->getUser());
+            $entityManager->persist($comment);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('program_episode_show',
+            ['program_slug' => $program->getSlug(), 'season_id' => $season->getId(), 'episode_slug' => $episode->getSlug()]);
+        }
+
+
         return $this->render('program/episode_show.html.twig', [
             'program' => $program,
             'season' => $season,
             'episode' => $episode,
+            'form' => $form->createView(),
         ]);
     }
 }

@@ -7,7 +7,11 @@
     <a class="series" href="#">
         Nos séries
     </a>
-    <a class="connection" href="#">
-        Connexion
-    </a>
+    {% if app.user %}
+        {{ app.user.email }}
+            <a class="connection" href="{{ path('app_logout') }}"> Se déconnecter</a>
+        {% else %}
+            <a class="connection" href="{{ path('login') }}"> Se connecter</a>
+    {% endif %}
+
 </nav>
