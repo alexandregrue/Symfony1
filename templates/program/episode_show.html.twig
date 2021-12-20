@@ -15,11 +15,16 @@
 </div>
 
 <h2>Commentaires :</h2>
-    
+
+
+
 {% for comment in episode.comments %}
     <p>{{ comment.comment }}</p>
     <p>{{ comment.rate }}</p>
     <p>{{ comment.author.email }}</p>
+    {% if is_granted("ROLE_ADMIN") or app.user == comment.author %}
+    <a href="{{ path('program_comment_delete', {program_slug: program.slug, season_id: season.id, episode_slug: episode.slug, comment_id: comment.id}) }}">Supprimer</a>
+    {% endif %}
 {% endfor %}
 
 {% if app.user %}

@@ -17,9 +17,13 @@ use App\Service\Slugify;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+
 
 /**
  * @Route("/program/", name="program_")
+ * 
  */
 class ProgramController extends AbstractController
 {
@@ -55,6 +59,7 @@ class ProgramController extends AbstractController
             $entityManager = $this->getDoctrine()->getManager();
             $slug = $slugify->generate($program->getTitle());
             $program->setSlug($slug);
+            $program->setOwner($this->getUser());
             $entityManager->persist($program);
             $entityManager->flush();
 
@@ -171,4 +176,56 @@ class ProgramController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
+
+    /**
+     * @Route("{slug}/edit", name="edit", methods={"GET", "POST"})
+     */
+    public function edit(Request $request, Program $program, EntityManagerInterface $entityManager): Response
+    {
+        if (!($this->getUser() == $program->getOwner())) {
+            throw new AccessDeniedException('Only the owner can edit this this program.');
+        }
+        $form = $this->createForm(ProgramType::class, $program);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+
+            return $this->redirectToRoute('program_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->renderForm('program/edit.html.twig', [
+            'program' => $program,
+            'form' => $form,
+        ]);
+    }
+
+    /**
+     * @Route("{program_slug}/season/{season_id}/episode/{episode_slug}/comment/{comment_id}/delete",
+     * requirements={"program"="\d+", "season"="\d+", "episode"="\d+"},
+     * methods={"GET", "POST"}, name="comment_delete")
+     * @ParamConverter("program", class="App\Entity\Program", options={"mapping": {"program_slug": "slug"}})
+     * @ParamConverter("season", class="App\Entity\Season", options={"mapping": {"season_id": "id"}})
+     * @ParamConverter("comment", class="App\Entity\Comment", options={"mapping": {"comment_id": "id"}})
+
+     * @ParamConverter("episode", class="App\Entity\Episode", options={"mapping": {"episode_slug": "slug"}})
+     * @return Response
+     */
+    public function deleteComment(Program $program, Season $season, Episode $episode, Comment $comment, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->getUser() == $comment->getAuthor() || in_array("ROLE_ADMIN", $this->getUser()->getRoles())) {
+            $entityManager->remove($comment);
+            $entityManager->flush();
+        }
+
+
+
+        return $this->redirectToRoute(
+            'program_episode_show',
+            ['program_slug' => $program->getSlug(), 'season_id' => $season->getId(), 'episode_slug' => $episode->getSlug()],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+
+
 }

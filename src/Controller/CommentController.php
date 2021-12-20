@@ -10,9 +10,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * @Route("/comment")
+ * @IsGranted("ROLE_ADMIN")
  */
 class CommentController extends AbstractController
 {
@@ -60,9 +63,14 @@ class CommentController extends AbstractController
 
     /**
      * @Route("/{id}/edit", name="comment_edit", methods={"GET", "POST"})
+     * @IsGranted("ROLE_CONTRIBUTOR")
      */
     public function edit(Request $request, Comment $comment, EntityManagerInterface $entityManager): Response
     {
+        if (!($this->getUser() == $comment->getAuthor())) {
+            // If not the owner, throws a 403 Access Denied exception
+            throw new AccessDeniedException('Only the Author can edit the comment!');
+        }
         $form = $this->createForm(CommentType::class, $comment);
         $form->handleRequest($request);
 

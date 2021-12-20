@@ -35,6 +35,7 @@ class ProgramFixtures extends Fixture implements DependentFixtureInterface
         $program->setSynopsis($programName . 'synopsis');
         $program->setCountry($programName . 'Country');
         $program->setYear(2010);
+        $program->setOwner($this->getReference('contributor_0'));
         $program->setCategory($this->getReference('category_3'));
         //ici les acteurs sont insérés via une boucle pour être DRY mais ce n'est pas obligatoire
         for ($i = 0; $i < count(ActorFixtures::ACTORS); $i++) {
@@ -53,6 +54,7 @@ class ProgramFixtures extends Fixture implements DependentFixtureInterface
         return [
             ActorFixtures::class,
             CategoryFixtures::class,
+            UserFixtures::class,
         ];
     }
 }

@@ -28,6 +28,10 @@
     {% endfor %}
 </ul>
 
+{% if is_granted("ROLE_ADMIN") %}
+    <a href="{{ path('program_edit', {slug: program.slug}) }}">Edit</a><br>
+{%endif%}
+
 <a href="{{ path('program_index') }}">
     Retour à la liste des programmes
 </a>
